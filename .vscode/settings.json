@@ -1,0 +1,15 @@
+{
+    "[typescript][json][js]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+    },
+    "prettier.useEditorConfig": true,
+    "files.exclude": {
+        "**/*.meta": true,
+        "**/node_modules": true,
+        "library": true,
+        "temp": true,
+    },
+    "eslint.enable": true,
+    "jest.runMode": "on-demand"
+}

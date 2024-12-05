@@ -1,0 +1,25 @@
+{
+    "ts-node": {
+        "transpileOnly": true
+    },
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "noImplicitAny": false,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "sourceMap": true,
+        "experimentalDecorators": true,
+        "moduleResolution": "Node",
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "allowJs": true,
+        "checkJs": false,
+        "strict": false,
+        "noFallthroughCasesInSwitch": true,
+        "outDir": "./dist",
+        "types": ["node"]
+    }
+}

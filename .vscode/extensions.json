@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "steoates.autoimport",
+        "EditorConfig.EditorConfig",
+        "dbaeumer.vscode-eslint",
+        "yzhang.markdown-all-in-one",
+        "esbenp.prettier-vscode",
+        "jebbs.plantuml"
+    ]
+}
