@@ -1,61 +1,94 @@
 import * as fs from "fs";
 import * as path from "path";
+import * as readline from "readline";
 
-function Main(folderPath: string, matchStr: string, replaceStr: string) {
+function askQuestion(query: string): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  return new Promise((resolve) =>
+    rl.question(query, (ans) => {
+      rl.close();
+      resolve(ans);
+    })
+  );
+}
+
+async function Main(folderPath: string, matchStr: string, replaceStr: string) {
   const regex = new RegExp(matchStr);
   console.log("开始检测文件夹:", folderPath);
 
-  const stack = [folderPath]; // 使用栈来管理遍历的文件夹
+  // 先收集所有将被重命名的文件
+  const pendingRenames: {
+    dir: string;
+    oldName: string;
+    newName: string;
+    fullPath: string;
+  }[] = [];
+  const stack = [folderPath];
   while (stack.length) {
-    const currentPath = stack.pop()!; // 获取当前文件夹路径
-    const files = fs.readdirSync(currentPath); // 读取文件夹中的文件和子文件夹
-
-    files.forEach((file) => {
+    const currentPath = stack.pop()!;
+    const files = fs.readdirSync(currentPath);
+    for (const file of files) {
       const filePath = path.join(currentPath, file);
       const stat = fs.statSync(filePath);
-
       if (stat.isDirectory()) {
-        // 如果是文件夹，加入栈中进行递归遍历
         stack.push(filePath);
       } else if (stat.isFile()) {
-        // 如果是文件，检查是否匹配
         if (file.match(regex)) {
-          console.log("原文件名:", file);
-          console.log("新文件名:", file.replace(regex, replaceStr));
-
-          // 如果需要修改文件名，可以取消注释以下代码
-          // fs.renameSync(filePath, path.join(currentPath, file.replace(regex, replaceStr)));
+          const newName = file.replace(regex, replaceStr);
+          pendingRenames.push({
+            dir: currentPath,
+            oldName: file,
+            newName,
+            fullPath: filePath,
+          });
         }
       }
-    });
+    }
   }
+
+  // 显示所有将要修改的文件
+  if (pendingRenames.length === 0) {
+    console.log("没有找到需要修改的文件。");
+    return;
+  }
+  console.log("将要修改以下文件：");
+  for (const item of pendingRenames) {
+    console.log(`文件夹: ${item.dir}`);
+    console.log(`  原文件名: ${item.oldName}`);
+    console.log(`  新文件名: ${item.newName}`);
+  }
+
+  // 询问用户是否确认
+  const answer = await askQuestion("是否确认重命名这些文件？(y/n): ");
+  if (answer.trim().toLowerCase() !== "y") {
+    console.log("已取消修改。");
+    return;
+  }
+
+  // 执行重命名
+  for (const item of pendingRenames) {
+    fs.renameSync(item.fullPath, path.join(item.dir, item.newName));
+    console.log(`已重命名: ${item.oldName} -> ${item.newName}`);
+  }
+  console.log("全部重命名完成。");
 }
 
-// 获取命令行参数
-var folderPath = process.argv[2];
-if (!folderPath) {
-  console.error("缺少必要的参数[folderPath]");
-  process.exit(1);
-}
+// 默认参数
+const DEFAULT_FOLDER_PATH =
+  "D:\\Maken6\\Assets\\Res\\GamePlay\\Config\\ActionOption";
+const DEFAULT_MATCH_STR = "action_option";
+const DEFAULT_REPLACE_STR = "build";
+
+// 获取命令行参数或用默认值
+const folderPath = process.argv[2] || DEFAULT_FOLDER_PATH;
+const matchStr = process.argv[3] || DEFAULT_MATCH_STR;
+const replaceStr = process.argv[4] || DEFAULT_REPLACE_STR;
+
 console.log("参数[folderPath]:", folderPath);
-
-var matchStr = process.argv[3];
-if (!matchStr) {
-  console.error("缺少必要的参数[matchStr]");
-  process.exit(1);
-}
 console.log("参数[matchStr]:", matchStr);
-
-var replaceStr = process.argv[4];
-if (!replaceStr) {
-  replaceStr = "";
-}
 console.log("参数[replaceStr]:", replaceStr);
 
-// 调用主函数
 Main(folderPath, matchStr, replaceStr);
-
-// 等待输入任意字符结束
-console.log("按任意键退出...");
-process.stdin.setRawMode(true); // 设置为原始模式
-process.stdin.resume(); // 恢复输入流
